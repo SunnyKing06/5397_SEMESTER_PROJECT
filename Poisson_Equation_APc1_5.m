@@ -2,7 +2,7 @@ clear all
 clc
  %Semester project for solving APc1-5; A 2-dimensional Poisson equation
  tic
- Nodes= 400;
+ Nodes= 200;
  x = length(Nodes);
  y= length(Nodes);
  dx= (pi+pi)/(Nodes+1);
@@ -36,12 +36,12 @@ clc
  U(1,:)=boundary_PHI;
  U(Nodes+2,:)=boundary_PSI;
  Comparer=zeros(Nodes+2,Nodes);
- counter=0;
- condition=0;
+ counter_gauss=0;
+ condition_gauss=0;
  
- % beginning of Gauss-Seidel
+% ******** beginning of Gauss-Seidel ********
 %  for k=1:200;
- while ( condition ==0) %Iteration number 
+ while ( condition_gauss ==0) %Iteration number 
        for i=2:Nodes+1%must solve for U in here as Ditchelt B.C not specified- U will be unknown here
          % moved to solve for boundary u here- had if statements and took too long
            U(i,1)= ( U(i-1,1) + 2*U(i,2) + U(i+1,1) + -dx2*F(i,1) )/4; 
@@ -63,62 +63,108 @@ clc
              % had to be checked every time
        
        end
-       for j=2:Nodes+1
-           for i=1:Nodes+2 
+       for j=1:Nodes+2
+           for i=2:Nodes+1 
                
            Comparer(i,j)= abs( ( U(i,j)-U_old(i,j) )) / abs(U(i,j));
            
            end
        end
-       if max(Comparer) <.001
+       if max(Comparer) <.0001
            
-           condition=1; % Changes condition to 1 to get out of while loop
+           condition_gauss=1; % Changes condition to 1 to get out of while loop
       
        else
            
            U_old=U;
-           counter=counter+1;
+           counter_gauss=counter_gauss+1;
        
        end
                
            
  end
- counter
+ counter_gauss
  
  
-% end of Gauss-Seidel solver
+%******** end of Gauss-Seidel solver ********
  
 
 
-%Beginning of Jacobi linear solver
 
-% U_old=U; % Old starting as assumed guess of U being zero plus boundary condition
-% for k=1:100  %Iteration number 
-%     for j=1:Nodes+2 %must solve for U in here as Ditchelt B.C not specified- U will be unknown here
+
+%******** Beginning of SOR solver ********
+
+% condition_SOR =0;
+% counter_SOR=0;
+% beta= 1.5; % recommended value for successive over relaxation
+% alpha= beta/4; % put at multiplier to save some time 
+% gamma = 1-beta;
+% %   for k=1:100;
+%  while ( condition_SOR ==0 ) %Iteration number 
+%        for i=2:Nodes+1%must solve for U in here as Ditchelt B.C not specified- U will be unknown here
+%          
+%            U(i,1)= U(i,1)*gamma + ( U(i-1,1) + 2*U(i,2) + U(i+1,1) + -dx2*F(i,1) )* alpha; 
+%        
+%        end
+%        
+%        for j=2:Nodes+1
 %         for i=2:Nodes+1 % U at boundary given, dont have to solve for them
-%             if (j==1) || (j==(Nodes+2)) % check to see if at boundary
-%                 if j==1
-%                 U(i,j)= ( U_old(i-1,j) + 2*U_old(i,j+1) + U_old(i+1,j) +  -dx2*F(i,j) )/4;
-%                 else
-%                 U(i,j)= ( U_old(i-1,j) + U_old(i+1,j) + 2*U_old(i,j-1) -dx2*F(i,j) )/4;
-%                 end
-%             else
-%           U(i,j)= ( U_old(i-1,j) + U_old(i,j+1) + U_old(i+1,j) + U_old(i,j-1) -dx2*F(i,j) )/4;
-%             end
+%            U(i,j)= U(i,j)*gamma +  ( U(i-1,j) + U(i,j+1) + U(i+1,j) + U(i,j-1) -dx2*F(i,j) )* alpha;
+%                
 %         end
-%     end
-%     U_old=U; % new becomes old at end of iteration, can use on the next turn to get new ones
+%        end
+%        
+%        for i=2:Nodes+1 %must solve for U in here as Ditchelt B.C not specified- U will be unknown here
+%              
+%            U(i,Nodes+2)= U(i,Nodes+2)*gamma+ (  U(i-1,Nodes+2) + U(i+1,Nodes+2) + 2*U(i,Nodes+1)+ -dx2*F(i,j) )*alpha; %made two additional for loops rather than having
+%              % only one main for loop for i & a bunch of if statements that
+%              % had to be checked every time
+%        
+%        end
+%        for j=1:Nodes+2
+%            for i=2:Nodes+1 
+%                
+%            Comparer(i,j)= abs( ( U(i,j)-U_old(i,j) )) / abs(U(i,j));
+%            
+%            end
+%        end
+%        if max(Comparer) <.0001
+%            
+%            condition_SOR=1; % Changes condition to 1 to get out of while loop
+%       
+%        else
+%            
+%            U_old=U;
+%            counter_SOR=counter_SOR+1;
+%        
+%        end
+%                
+%            
 %  end
-
-% % end of Jacobi linear solver
-
+% counter_SOR
+ %******** End of SOR SOLVER ********
+ 
  U_Plot = transpose(U);
  
  surf(U_Plot)
+ title('Surface Plot for solution of given Poisson equation')
  ylabel('y-axis')
  xlabel('x-axis')
-toc
+
+ 
+ toc
  
 % plot(x,U(1,:))
+
+%Method of Manufactured Solutions Comparison
+% From Professor's notes, use the following:
+% V will be subsitituted in to 'manufacture' a solution
+
+for j=1: Nodes+1
+    for i=2:Nodes+1
+        V(i,j)= ((x(i)).^3)*((pi-x(i)).^3)+ ((y(j)).^3)*((pi-y(j)).^3); % solving for made up V
+    end 
+end
+
      
  
